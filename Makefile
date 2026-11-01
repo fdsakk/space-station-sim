@@ -22,6 +22,12 @@ $(BUILD)/station: $(OBJ)/station/main.o $(OBJ)/station/supervisor.o $(OBJ)/stati
 BINS += $(BUILD)/port
 $(BUILD)/port: $(OBJ)/port/main.o $(OBJ)/port/port_fsm.o
 
+BINS += $(BUILD)/generator
+$(BUILD)/generator: $(OBJ)/generator/main.o
+
+BINS += $(BUILD)/ship
+$(BUILD)/ship: $(OBJ)/ship/main.o
+
 # Testy jednostkowe modułów spoza src/common/: dodatkowe pliki obiektowe.
 $(BUILD)/tests/test_queue: $(OBJ)/station/queue.o
 $(BUILD)/tests/test_port_fsm: $(OBJ)/port/port_fsm.o
