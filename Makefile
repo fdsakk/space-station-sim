@@ -7,9 +7,12 @@ SANITIZE = -fsanitize=address,undefined -fno-omit-frame-pointer
 BUILD = build
 OBJ = $(BUILD)/obj
 
-COMMON_OBJ = $(patsubst src/%.c,$(OBJ)/%.o,$(wildcard src/common/*.c))
+# hmac.o potrzebuje OpenSSL (-lcrypto), więc dołączają go tylko programy sieciowe i jego test.
+HMAC_OBJ = $(OBJ)/common/hmac.o
+COMMON_OBJ = $(filter-out $(HMAC_OBJ),$(patsubst src/%.c,$(OBJ)/%.o,$(wildcard src/common/*.c)))
 UNIT_TESTS = $(patsubst tests/unit/%.c,$(BUILD)/tests/%,$(wildcard tests/unit/*.c))
 SCENARIOS = $(wildcard tests/scenarios/*.sh)
+KEY = config/klucz
 SOURCES = $(wildcard src/*/*.c src/*/*.h tests/unit/*.c)
 
 # Programy: każdy program dopisuje tu swój blok (nazwa w BINS + własne pliki obiektowe).
@@ -25,6 +28,10 @@ $(BUILD)/port: $(OBJ)/port/main.o $(OBJ)/port/port_fsm.o
 BINS += $(BUILD)/generator
 $(BUILD)/generator: $(OBJ)/generator/main.o
 
+BINS += $(BUILD)/gateway
+$(BUILD)/gateway: $(OBJ)/gateway/main.o $(HMAC_OBJ)
+$(BUILD)/gateway: LDLIBS += -lcrypto
+
 BINS += $(BUILD)/ship
 $(BUILD)/ship: $(OBJ)/ship/main.o
 
@@ -33,9 +40,16 @@ BINS += $(BUILD)/panel
 $(BUILD)/panel: $(OBJ)/panel/main.o $(OBJ)/port/port_fsm.o
 $(BUILD)/panel: LDLIBS += -lncursesw
 
+# Zdalny operator: osobny program poza drzewem procesów stacji, nie dotyka IPC.
+BINS += $(BUILD)/operator
+$(BUILD)/operator: $(OBJ)/operator/main.o $(HMAC_OBJ)
+$(BUILD)/operator: LDLIBS += -lcrypto
+
 # Testy jednostkowe modułów spoza src/common/: dodatkowe pliki obiektowe.
 $(BUILD)/tests/test_queue: $(OBJ)/station/queue.o
 $(BUILD)/tests/test_port_fsm: $(OBJ)/port/port_fsm.o
+$(BUILD)/tests/test_hmac: $(HMAC_OBJ)
+$(BUILD)/tests/test_hmac: LDLIBS += -lcrypto
 
 .PHONY: all test check format clean clean-ipc
 
@@ -46,7 +60,13 @@ $(BUILD)/tests/test_port_fsm: $(OBJ)/port/port_fsm.o
 # Bloki programów stoją przed regułą all, więc bez tego domyślnym celem byłby pierwszy program.
 .DEFAULT_GOAL := all
 
-all: $(BINS)
+all: $(BINS) $(KEY)
+
+# Wspólny klucz bramy i operatora: losowy, tworzony raz, poza repozytorium (.gitignore),
+# czytelny tylko dla właściciela. Ścieżka jak KEY_PATH w config.h.
+$(KEY):
+	@mkdir -p $(dir $@)
+	(umask 077 && openssl rand -hex 32 > $@)
 
 # Każdy program = własne obiekty + wspólne obiekty z src/common/.
 $(BINS): $(COMMON_OBJ)
