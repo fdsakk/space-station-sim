@@ -28,6 +28,11 @@ $(BUILD)/generator: $(OBJ)/generator/main.o
 BINS += $(BUILD)/ship
 $(BUILD)/ship: $(OBJ)/ship/main.o
 
+# Panel jako jedyny program używa ncurses (wersja "w" obsługuje polskie znaki w UTF-8).
+BINS += $(BUILD)/panel
+$(BUILD)/panel: $(OBJ)/panel/main.o $(OBJ)/port/port_fsm.o
+$(BUILD)/panel: LDLIBS += -lncursesw
+
 # Testy jednostkowe modułów spoza src/common/: dodatkowe pliki obiektowe.
 $(BUILD)/tests/test_queue: $(OBJ)/station/queue.o
 $(BUILD)/tests/test_port_fsm: $(OBJ)/port/port_fsm.o
