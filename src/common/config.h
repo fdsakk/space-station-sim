@@ -1,5 +1,5 @@
 /* Stałe całego systemu: liczności, nazwy obiektów IPC, czasy, ścieżki.
- * Jedyne miejsce na "magiczne liczby" - reszta kodu używa tych nazw. */
+ * Stałe potrzebne tylko jednemu modułowi (np. układ ekranu panelu) są nazwane w tym module. */
 #ifndef CONFIG_H
 #define CONFIG_H
 
