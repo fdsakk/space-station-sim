@@ -22,22 +22,29 @@
 
 #define LOOP_TICK_MS 100 /* co tyle pętle główne sprawdzają flagi i liczniki czasu */
 
+/* Mnożnik czasów symulacji: make slow buduje wersję wolniejszą do oglądania. Mnożymy wszystkie
+ * czasy symulacji naraz, więc ich proporcje, a z nimi zachowanie stacji, zostają takie same. */
+#ifndef TIME_SCALE
+#define TIME_SCALE 1
+#endif
+
 /* Czasy etapów pracy portu w ms. */
-#define DOCK_MS 3000
-#define UNDOCK_MS 2000
-#define EQUALIZE_MS 2000
-#define LOCK_CLOSE_MS 1000
-#define REPAIR_MS 5000
+#define DOCK_MS (3000 * TIME_SCALE)
+#define UNDOCK_MS (2000 * TIME_SCALE)
+#define EQUALIZE_MS (2000 * TIME_SCALE)
+#define LOCK_CLOSE_MS (1000 * TIME_SCALE)
+#define REPAIR_MS (5000 * TIME_SCALE)
 /* Czas obsługi zależy od typu statku. */
-#define SERVICE_SHUTTLE_MS 4000
-#define SERVICE_FREIGHTER_MS 10000
-#define SERVICE_EMERGENCY_MS 6000
+#define SERVICE_SHUTTLE_MS (4000 * TIME_SCALE)
+#define SERVICE_FREIGHTER_MS (10000 * TIME_SCALE)
+#define SERVICE_EMERGENCY_MS (6000 * TIME_SCALE)
 
 #define ACK_TIMEOUT_MS 5000 /* tyle sterownik czeka na potwierdzenie przydziału portu */
-#define STARVATION_MS 30000 /* po tylu ms w kolejce statek jest traktowany jak awaryjny */
-#define SPAWN_MIN_MS 3000   /* generator: najkrótszy odstęp między statkami */
-#define SPAWN_MAX_MS 8000   /* generator: najdłuższy odstęp między statkami */
-#define WAVE_SIZE 5         /* tyle statków dokłada polecenie "fala" */
+/* Po tylu ms w kolejce statek jest traktowany jak awaryjny */
+#define STARVATION_MS (30000 * TIME_SCALE)
+#define SPAWN_MIN_MS (3000 * TIME_SCALE) /* generator: najkrótszy odstęp między statkami */
+#define SPAWN_MAX_MS (8000 * TIME_SCALE) /* generator: najdłuższy odstęp między statkami */
+#define WAVE_SIZE 5                      /* tyle statków dokłada polecenie "fala" */
 
 #define BIN_DIR "./build"
 #define PATH_LEN 64 /* ścieżka programu: BIN_DIR + "/" + nazwa */

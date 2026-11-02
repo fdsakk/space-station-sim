@@ -51,7 +51,7 @@ $(BUILD)/tests/test_port_fsm: $(OBJ)/port/port_fsm.o
 $(BUILD)/tests/test_hmac: $(HMAC_OBJ)
 $(BUILD)/tests/test_hmac: LDLIBS += -lcrypto
 
-.PHONY: all test check format clean clean-ipc
+.PHONY: all slow test check format clean clean-ipc
 
 # Nieudana reguła usuwa swój cel: np. po błędzie openssl nie zostaje pusty config/klucz, który
 # make uznałby potem za gotowy.
@@ -79,6 +79,11 @@ $(OBJ)/%.o: src/%.c
 $(BUILD)/tests/%: tests/unit/%.c $(COMMON_OBJ)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDLIBS)
+
+# Wersja 3 razy wolniejsza do oglądania. Powrót do normalnego tempa: make clean && make.
+slow:
+	$(MAKE) clean
+	$(MAKE) all EXTRA_CFLAGS="-DTIME_SCALE=3"
 
 test: all $(UNIT_TESTS)
 	@for t in $(UNIT_TESTS); do ./$$t || exit 1; done

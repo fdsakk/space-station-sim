@@ -24,6 +24,9 @@ tail -f stacja.log   # dziennik zdarzeń (w drugim terminalu)
 ./build/operator     # zdalny operator przez UDP (te same komendy); ./build/operator <adres stacji>
 ```
 
+`make slow` buduje wersję 3 razy wolniejszą, wygodną do oglądania. Powrót do normalnego tempa:
+`make clean && make`.
+
 `make` przy pierwszym budowaniu tworzy losowy klucz HMAC `config/klucz` (poza repozytorium).
 Zdalny operator na innym komputerze potrzebuje kopii tego pliku.
 
