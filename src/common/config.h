@@ -17,7 +17,8 @@
 #define NAME_PORT_PREFIX "/ss_port"  /* + numer portu 0..PORT_COUNT-1 */
 #define NAME_SHIP_PREFIX "/ss_ship_" /* + pid statku */
 #define NAME_LEN 32
-#define QUEUE_CAPACITY 10 /* domyślny limit Linuksa dla zwykłego użytkownika */
+#define LOCK_PATH "/tmp/ss_station.lock" /* blokada: najwyżej jedna działająca stacja */
+#define QUEUE_CAPACITY 10                /* domyślny limit Linuksa dla zwykłego użytkownika */
 
 #define LOOP_TICK_MS 100 /* co tyle pętle główne sprawdzają flagi i liczniki czasu */
 

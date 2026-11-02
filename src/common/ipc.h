@@ -10,6 +10,10 @@
 #include "protocol.h"
 #include "state.h"
 
+/* Blokada jednej stacji na komputerze. Zwraca deskryptor, który stacja trzyma otwarty do końca
+ * pracy. Gdy inna stacja już działa, wypisuje komunikat i kończy proces. */
+int ipc_station_lock(void);
+
 /* Pamięć dzielona: tworzy tylko station, pozostałe procesy się dołączają. */
 struct station_state *ipc_shm_create(void);
 struct station_state *ipc_shm_attach(void);

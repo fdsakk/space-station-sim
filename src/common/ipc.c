@@ -25,16 +25,31 @@ static struct station_state *map_state(int fd)
     return addr;
 }
 
-struct station_state *ipc_shm_create(void)
+int ipc_station_lock(void)
 {
-    /* O_EXCL: istniejący obiekt oznacza, że działa inna stacja albo poprzednia została zabita.
-     * Nie usuwamy go automatycznie - zniszczylibyśmy działającą stację. */
-    int fd = shm_open(NAME_SHM, O_RDWR | O_CREAT | O_EXCL, 0600);
-    if (fd == -1 && errno == EEXIST) {
-        fprintf(stderr, "station: obiekty IPC już istnieją - działa inna stacja albo poprzednia "
-                        "nie posprzątała (wtedy: make clean-ipc)\n");
+    /* Blokadę fcntl system zwalnia przy każdej śmierci procesu, także po kill -9. Dlatego wolna
+     * blokada oznacza, że żadna stacja nie działa. O_CLOEXEC: dzieci nie dostają deskryptora. */
+    int fd = open(LOCK_PATH, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+    if (fd == -1) {
+        die(LOCK_PATH);
+    }
+    struct flock lock = {0};
+    lock.l_type = F_WRLCK;
+    lock.l_whence = SEEK_SET;
+    if (fcntl(fd, F_SETLK, &lock) == -1) {
+        if (errno != EACCES && errno != EAGAIN) {
+            die(LOCK_PATH);
+        }
+        fprintf(stderr, "station: inna stacja już działa\n");
         exit(EXIT_FAILURE);
     }
+    return fd;
+}
+
+struct station_state *ipc_shm_create(void)
+{
+    /* O_EXCL: pozostałości usuwa start stacji, więc istniejący tu obiekt byłby błędem. */
+    int fd = shm_open(NAME_SHM, O_RDWR | O_CREAT | O_EXCL, 0600);
     if (fd == -1) {
         die("shm_open " NAME_SHM);
     }

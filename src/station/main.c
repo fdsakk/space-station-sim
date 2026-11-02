@@ -3,8 +3,10 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "../common/config.h"
+#include "../common/die.h"
 #include "../common/ipc.h"
 #include "../common/log.h"
 #include "../common/signals.h"
@@ -19,6 +21,11 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     const char *gateway_addr = argc == 2 ? argv[1] : GATEWAY_ADDR;
+
+    /* Blokada jest nasza, więc żadna stacja nie działa: obiekty IPC, jeśli są, zostały po stacji
+     * zabitej bez sprzątania i można je bezpiecznie usunąć. */
+    int lock = ipc_station_lock();
+    ipc_unlink_all();
 
     struct station_state *state = ipc_shm_create();
     sem_t *mutex = ipc_sem_create(NAME_MUTEX, 1);
@@ -75,5 +82,8 @@ int main(int argc, char *argv[])
     ipc_sem_close(mutex);
     ipc_shm_detach(state);
     ipc_unlink_all();
+    if (close(lock) == -1) {
+        die("close");
+    }
     return EXIT_SUCCESS;
 }

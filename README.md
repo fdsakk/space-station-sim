@@ -33,5 +33,5 @@ Zdalny operator na innym komputerze potrzebuje kopii tego pliku.
 make test            # testy jednostkowe i scenariusze
 make check           # to samo z sanitizerami + clang-format + cppcheck (przed każdym commitem)
 make format          # formatuje kod
-make clean-ipc       # usuwa obiekty IPC po stacji zabitej przez kill -9
+make clean-ipc       # usuwa ręcznie obiekty IPC (zwykle niepotrzebne: start stacji sprząta sam)
 ```
