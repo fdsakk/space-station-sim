@@ -469,11 +469,18 @@ void control_tick(void)
     publish();
 }
 
+/* Statki generatora kończy on sam. Statek uruchomiony ręcznie nie ma innej informacji, że stacji
+ * już nie będzie, więc dostaje zgodę na odlot i usuwa swoją kolejkę. */
 void control_close(void)
 {
     for (int i = 0; i < SHIP_MAX; i++) {
-        if (ships[i].rec.pid != 0) {
-            ipc_mq_close(ships[i].queue);
+        if (ships[i].rec.pid == 0) {
+            continue;
         }
+        struct msg bye = make_msg(DEPART_OK, ships[i].rec.pid, -1);
+        if (!ipc_mq_try_send(ships[i].queue, &bye)) {
+            log_event("statek %d nie odbiera komunikatów", (int)ships[i].rec.pid);
+        }
+        ipc_mq_close(ships[i].queue);
     }
 }
