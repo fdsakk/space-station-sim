@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <string.h>
+#include <sys/prctl.h>
 #include <unistd.h>
 
 #include "die.h"
@@ -57,6 +58,11 @@ pid_t signals_fork(void)
      * także gdy sygnał czekał na odblokowanie. */
     if (pid == 0) {
         set_stop_action(SIG_DFL);
+        /* Gdy rodzic zginie bez sprzątania (kill -9), dziecko dostanie SIGTERM i zakończy się
+         * normalnie, zamiast działać dalej i np. trzymać port UDP bramy. Działa też po exec. */
+        if (prctl(PR_SET_PDEATHSIG, SIGTERM) == -1) {
+            die("prctl");
+        }
     }
     if (sigprocmask(SIG_SETMASK, &previous, NULL) == -1) {
         die("sigprocmask");
