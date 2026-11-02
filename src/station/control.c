@@ -217,19 +217,24 @@ static void on_undocked(const struct msg *m)
     }
 }
 
-static void on_ship_lost(const struct msg *m)
+static void forget_lost_ship(pid_t pid)
 {
-    log_event("statek %d utracony (sygnał %d)", (int)m->ship, m->arg);
-    struct ship *s = find_ship(m->ship);
+    struct ship *s = find_ship(pid);
     if (s != NULL) {
         release_ship(s, SHIP_LOST);
     }
     /* Martwy statek nie usunie swojej kolejki, więc robi to sterownik. */
     char name[NAME_LEN];
-    ipc_ship_queue_name(m->ship, name, sizeof name);
+    ipc_ship_queue_name(pid, name, sizeof name);
     if (mq_unlink(name) == -1 && errno != ENOENT) {
         log_event("mq_unlink %s: %s", name, strerror(errno));
     }
+}
+
+static void on_ship_lost(const struct msg *m)
+{
+    log_event("statek %d utracony (sygnał %d)", (int)m->ship, m->arg);
+    forget_lost_ship(m->ship);
 }
 
 /* Statek z zepsutego portu wraca na początek kolejki w swojej grupie priorytetu.
@@ -368,6 +373,20 @@ static void check_ack_timeouts(long long now_ms)
     }
 }
 
+/* Generator zgłasza tylko swoje statki zabite sygnałem albo zakończone błędem. Statek po SIGTERM
+ * kończy się kodem 0, a uruchomionego ręcznie generator nie zna, więc sterownik sprawdza sam:
+ * kill z sygnałem 0 niczego nie wysyła, tylko mówi, czy proces istnieje. */
+static void check_ships_alive(void)
+{
+    for (int i = 0; i < SHIP_MAX; i++) {
+        pid_t pid = ships[i].rec.pid;
+        if (pid != 0 && kill(pid, 0) == -1 && errno == ESRCH) {
+            log_event("statek %d zniknął bez zgłoszenia", (int)pid);
+            forget_lost_ship(pid);
+        }
+    }
+}
+
 /* Proces portu zginął: rekord martwego portu pisze sterownik. Wykonuje na nim
  * to samo przejście automatu, co port po CMD_FAULT, i oddaje energię, którą port trzymał. */
 static void port_died(int port, long long now_ms)
@@ -444,6 +463,7 @@ void control_tick(void)
 {
     long long now = time_now_ms();
     check_ports(now);
+    check_ships_alive();
     check_ack_timeouts(now);
     assign_ports(now);
     publish();
